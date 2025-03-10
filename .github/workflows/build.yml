@@ -69,6 +69,11 @@ jobs:
         with:
           submodules: true
 
+      - uses: msys2/setup-msys2@v2
+        if: matrix.target_name == 'x86_64-windows-gnu'
+        with:
+          update: true
+
       - name: Build target
         run: |
           CMAKE_ARGS=()
