@@ -100,35 +100,24 @@ void writeOut(T... args) {
     std::cout << text << std::endl;
 }
 
-void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
-    sgl::Logfile::get()->write("<br>");
-    writeOut(std::string() + "Device name: " + device->getDeviceName());
-    if (device->getPhysicalDeviceProperties().apiVersion >= VK_API_VERSION_1_1) {
-        writeOut("Device driver name: ", device->getDeviceDriverName());
-        writeOut("Device driver info: ", device->getDeviceDriverInfo());
-        writeOut("Device driver ID: ", device->getDeviceDriverId());
-    }
-
-    writeOut("");
-    writeOut("Default subgroup size: ", device->getPhysicalDeviceSubgroupProperties().subgroupSize);
-    if (device->getPhysicalDeviceVulkan13Features().subgroupSizeControl
-            && (device->getPhysicalDeviceVulkan13Properties().requiredSubgroupSizeStages & VK_SHADER_STAGE_COMPUTE_BIT) != 0) {
-        writeOut("Min subgroup size: ", device->getPhysicalDeviceVulkan13Properties().minSubgroupSize);
-        writeOut("Max subgroup size: ", device->getPhysicalDeviceVulkan13Properties().maxSubgroupSize);
-    }
-
+void checkCooperativeMatrixFeaturesKHR(sgl::vk::Device* device) {
     if (!device->getCooperativeMatrixFeaturesKHR().cooperativeMatrix) {
+        writeOut("");
         writeOut("VK_KHR_cooperative_matrix is not supported.");
         return;
     }
 
+#ifdef VK_KHR_cooperative_matrix
     const auto& cooperativeMatrixProperties = device->getSupportedCooperativeMatrixPropertiesKHR();
+
+    writeOut("");
+    writeOut("VK_KHR_cooperative_matrix properties:");
     writeOut("");
     sgl::Logfile::get()->write("<table><tr><th>MSize</th><th>NSize</th><th>KSize</th><th>AType</th><th>BType</th><th>CType</th><th>ResultType</th><th>sat</th><th>scope</th></tr>\n");
     for (size_t i = 0; i < cooperativeMatrixProperties.size(); i++) {
         auto& props = cooperativeMatrixProperties[i];
         std::cout
-                << "\nMSize: " << props.MSize
+                << "MSize: " << props.MSize
                 << "\nNSize: " << props.NSize
                 << "\nKSize: " << props.KSize
                 << "\nAType: " << getComponentTypeString(props.AType)
@@ -151,6 +140,88 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
         sgl::Logfile::get()->write("</tr>\n");
     }
     sgl::Logfile::get()->write("</table>\n");
+#endif
+}
+
+void checkCooperativeMatrixFeaturesNV2(sgl::vk::Device* device) {
+#ifdef VK_NV_cooperative_matrix2
+    if (!device->isDeviceExtensionSupported(VK_NV_COOPERATIVE_MATRIX_2_EXTENSION_NAME)) {
+#endif
+        writeOut("");
+        writeOut("VK_NV_cooperative_matrix2 is not supported.");
+        return;
+#ifdef VK_NV_cooperative_matrix2
+    }
+#endif
+
+#ifdef VK_NV_cooperative_matrix2
+    const auto& features = device->getCooperativeMatrix2FeaturesNV();
+    const auto& properties = device->getCooperativeMatrix2PropertiesNV();
+    const auto& flexibleDimensionsProperties = device->getSupportedCooperativeMatrixFlexibleDimensionsPropertiesNV();
+    writeOut("");
+    writeOut("VK_NV_cooperative_matrix2 properties:");
+    writeOut("cooperativeMatrixWorkgroupScope: ", features.cooperativeMatrixWorkgroupScope);
+    writeOut("cooperativeMatrixFlexibleDimensions: ", features.cooperativeMatrixFlexibleDimensions);
+    writeOut("cooperativeMatrixReductions: ", features.cooperativeMatrixReductions);
+    writeOut("cooperativeMatrixConversions: ", features.cooperativeMatrixConversions);
+    writeOut("cooperativeMatrixPerElementOperations: ", features.cooperativeMatrixPerElementOperations);
+    writeOut("cooperativeMatrixTensorAddressing: ", features.cooperativeMatrixTensorAddressing);
+    writeOut("cooperativeMatrixBlockLoads: ", features.cooperativeMatrixBlockLoads);
+    writeOut("cooperativeMatrixWorkgroupScopeMaxWorkgroupSize: ", properties.cooperativeMatrixWorkgroupScopeMaxWorkgroupSize);
+    writeOut("cooperativeMatrixFlexibleDimensionsMaxDimension: ", properties.cooperativeMatrixFlexibleDimensionsMaxDimension);
+    writeOut("cooperativeMatrixWorkgroupScopeReservedSharedMemory: ", properties.cooperativeMatrixWorkgroupScopeReservedSharedMemory);
+    writeOut("");
+    sgl::Logfile::get()->write("<table><tr><th>MGranularity</th><th>NGranularity</th><th>KGranularity</th><th>AType</th><th>BType</th><th>CType</th><th>ResultType</th><th>sat</th><th>scope</th><th>WGInvocs</th></tr>\n");
+    for (size_t i = 0; i < flexibleDimensionsProperties.size(); i++) {
+        auto& props = flexibleDimensionsProperties[i];
+        std::cout
+                << "MGranularity: " << props.MGranularity
+                << "\nNGranularity: " << props.NGranularity
+                << "\nKGranularity: " << props.KGranularity
+                << "\nAType: " << getComponentTypeString(props.AType)
+                << "\nBType: " << getComponentTypeString(props.BType)
+                << "\nCType: " << getComponentTypeString(props.CType)
+                << "\nResultType: " << getComponentTypeString(props.ResultType)
+                << "\nsaturatingAccumulation: " << props.saturatingAccumulation
+                << "\nscope: " << getScopeString(props.scope)
+                << "\nworkgroupInvocations: " << props.workgroupInvocations
+                << "\n" << std::endl;
+        sgl::Logfile::get()->write("<tr></tr>");
+        sgl::Logfile::get()->write("<td>" + std::to_string(props.MGranularity) +"</td>");
+        sgl::Logfile::get()->write("<td>" + std::to_string(props.NGranularity) +"</td>");
+        sgl::Logfile::get()->write("<td>" + std::to_string(props.KGranularity) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.AType) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.BType) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.CType) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.ResultType) +"</td>");
+        sgl::Logfile::get()->write("<td>" + std::to_string(props.saturatingAccumulation) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getScopeString(props.scope) +"</td>");
+        sgl::Logfile::get()->write("<td>" + std::to_string(props.workgroupInvocations) +"</td>");
+        sgl::Logfile::get()->write("</tr>\n");
+    }
+    sgl::Logfile::get()->write("</table>\n");
+#endif
+}
+
+void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
+    sgl::Logfile::get()->write("<br>");
+    writeOut(std::string() + "Device name: " + device->getDeviceName());
+    if (device->getPhysicalDeviceProperties().apiVersion >= VK_API_VERSION_1_1) {
+        writeOut("Device driver name: ", device->getDeviceDriverName());
+        writeOut("Device driver info: ", device->getDeviceDriverInfo());
+        writeOut("Device driver ID: ", device->getDeviceDriverId());
+    }
+
+    writeOut("");
+    writeOut("Default subgroup size: ", device->getPhysicalDeviceSubgroupProperties().subgroupSize);
+    if (device->getPhysicalDeviceVulkan13Features().subgroupSizeControl
+            && (device->getPhysicalDeviceVulkan13Properties().requiredSubgroupSizeStages & VK_SHADER_STAGE_COMPUTE_BIT) != 0) {
+        writeOut("Min subgroup size: ", device->getPhysicalDeviceVulkan13Properties().minSubgroupSize);
+        writeOut("Max subgroup size: ", device->getPhysicalDeviceVulkan13Properties().maxSubgroupSize);
+    }
+
+    checkCooperativeMatrixFeaturesKHR(device);
+    checkCooperativeMatrixFeaturesNV2(device);
 }
 
 int main() {
@@ -171,6 +242,9 @@ int main() {
 #ifdef VK_NV_cooperative_matrix
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_MATRIX_EXTENSION_NAME);
 #endif
+#ifdef VK_NV_cooperative_matrix2
+    optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_MATRIX_2_EXTENSION_NAME);
+#endif
 #ifdef VK_KHR_cooperative_matrix
     optionalDeviceExtensions.push_back(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
 #endif
@@ -184,6 +258,10 @@ int main() {
 
     delete device;
     delete instance;
+
+#ifdef _WIN32
+    system("pause");
+#endif
 
     return 0;
 }

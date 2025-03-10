@@ -89,6 +89,7 @@ jobs:
             wget
             mingw64/mingw-w64-x86_64-cmake
             mingw64/mingw-w64-x86_64-gcc
+            mingw64/mingw-w64-x86_64-ntldd
 
       - name: Build target
         run: |
@@ -120,6 +121,9 @@ jobs:
           cp -r docs/license-libraries dist/docs/license-libraries
           cp README.md dist/docs
           cp LICENSE dist/docs
+          if [ "${{ matrix.target_name }}" == "x86_64-windows-gnu" ]; then
+              cp "$(ntldd "build/${exec_name}" | grep libwinpthread | awk '{print $3}')" dist/
+          fi
           mv dist ${{ env.artifact_name }}
 
       #- name: Create archive (Unix)
