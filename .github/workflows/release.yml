@@ -122,7 +122,7 @@ jobs:
           cp README.md dist/docs
           cp LICENSE dist/docs
           if [ "${{ matrix.target_name }}" == "x86_64-windows-gnu" ]; then
-              cp "$(ntldd "build/${exec_name}" | grep libwinpthread | awk '{print $3}')" dist/
+              cp "$(ntldd "build/${proj_name}.exe" | grep libwinpthread | awk '{print $3}')" dist/
           fi
           mv dist ${{ env.artifact_name }}
 
