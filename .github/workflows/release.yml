@@ -81,6 +81,14 @@ jobs:
         if: matrix.target_name == 'x86_64-windows-gnu'
         with:
           update: true
+          install: >-
+            base-devel
+            make
+            git
+            curl
+            wget
+            mingw64/mingw-w64-x86_64-cmake
+            mingw64/mingw-w64-x86_64-gcc
 
       - name: Build target
         run: |
@@ -110,7 +118,7 @@ jobs:
               cp "build/${proj_name}" "dist/"
           fi
           cp -r docs/license-libraries dist/docs/license-libraries
-          cp README dist/docs
+          cp README.md dist/docs
           cp LICENSE dist/docs
           mv dist ${{ env.artifact_name }}
 
