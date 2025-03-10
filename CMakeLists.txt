@@ -1,0 +1,76 @@
+cmake_minimum_required (VERSION 3.7)
+cmake_policy(VERSION 3.7...3.20)
+
+project(QueryVkCoopMat)
+
+set(CMAKE_CXX_STANDARD 17)
+
+file(GLOB_RECURSE SOURCES src/*.cpp src/*.c src/*.hpp src/*.h)
+include_directories(src)
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus")
+    # Avoid warning 'IMPORTED_IMPLIB not set for imported target "sgl" configuration "MinSizeRel/RelWithDebInfo".'
+    set(CMAKE_CONFIGURATION_TYPES Debug Release)
+endif()
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W3 /EHsc /Zc:__cplusplus")
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+endif()
+
+if(VCPKG_TOOLCHAIN)
+    if(EXISTS "${Z_VCPKG_ROOT_DIR}/triplets/${VCPKG_TARGET_TRIPLET}.cmake")
+        include("${Z_VCPKG_ROOT_DIR}/triplets/${VCPKG_TARGET_TRIPLET}.cmake")
+    elseif(EXISTS "${Z_VCPKG_ROOT_DIR}/triplets/community/${VCPKG_TARGET_TRIPLET}.cmake")
+        include("${Z_VCPKG_ROOT_DIR}/triplets/community/${VCPKG_TARGET_TRIPLET}.cmake")
+    else()
+        message(FATAL_ERROR "Could not find a vcpkg triplet file for ${VCPKG_TARGET_TRIPLET}.")
+    endif()
+endif()
+
+option(USE_STATIC_STD_LIBRARIES "Link with standard libraries statically (only supported on Linux for now)." OFF)
+
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/StringUtils.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/Dialog.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/File/Execute.cpp")
+#list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/File/FileUtils.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/File/Logfile.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Graphics/Vulkan/libs/volk/volk.c")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Graphics/Vulkan/Utils/VmaImpl.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Graphics/Vulkan/Utils/Instance.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Graphics/Vulkan/Utils/Status.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Graphics/Vulkan/Utils/Device.cpp")
+
+add_executable(QueryVkCoopMat ${SOURCES} ${CUDA_SOURCES})
+target_include_directories(QueryVkCoopMat PRIVATE third_party/sgl/src)
+target_include_directories(QueryVkCoopMat PRIVATE third_party/sgl/src/Graphics/Vulkan/libs/Vulkan-Headers)
+target_compile_definitions(QueryVkCoopMat PRIVATE DLL_OBJECT=)
+target_compile_definitions(QueryVkCoopMat PRIVATE SUPPORT_VULKAN)
+target_compile_definitions(QueryVkCoopMat PRIVATE DISABLE_VULKAN_SWAPCHAIN_SUPPORT)
+if (WIN32)
+    target_compile_definitions(QueryVkCoopMat PRIVATE DISABLE_SINGLETON_BOOST_INTERPROCESS)
+endif()
+
+if((MSYS OR MINGW OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")) AND ${USE_STATIC_STD_LIBRARIES})
+    target_link_options(QueryVkCoopMat PRIVATE -static-libgcc -static-libstdc++)
+endif()
+
+if(MSVC)
+    set_target_properties(QueryVkCoopMat PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+    set_target_properties(QueryVkCoopMat PROPERTIES COMPILE_DEFINITIONS_DEBUG "_CONSOLE")
+    set_target_properties(QueryVkCoopMat PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:CONSOLE")
+    set_target_properties(QueryVkCoopMat PROPERTIES COMPILE_DEFINITIONS_RELWITHDEBINFO "_CONSOLE")
+    set_target_properties(QueryVkCoopMat PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
+    set_target_properties(QueryVkCoopMat PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:CONSOLE")
+endif()
+
+if(MSYS OR MINGW OR (${CMAKE_GENERATOR} STREQUAL "MinGW Makefiles") OR (${CMAKE_GENERATOR} STREQUAL "MSYS Makefiles"))
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mconsole")
+    target_link_libraries(QueryVkCoopMat PUBLIC mingw32)
+endif()
+
+
