@@ -66,21 +66,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
 
       - name: Build target
         run: |
           CMAKE_ARGS=()
           if [ "${{ matrix.target_name }}" == "x86_64-windows-gnu" ]; then
               CMAKE_ARGS+=(-G "MSYS Makefiles")
-              CMAKE_ARGS+=(-DUSE_STATIC_STD_LIBRARIES=ON)
-          fi
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              CMAKE_ARGS+=(-DUSE_STATIC_STD_LIBRARIES=ON)
           fi
           if [ "$RUNNER_OS" == "Linux" ] && [ "${{ matrix.target_name }}" == "aarch64-linux" ]; then
               sudo apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross
+              CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="CMake/aarch64-linux-gnu.toolchain.cmake")
           fi
-          cmake . -B build -DCMAKE_BUILD_TYPE=Release ${CMAKE_ARGS[@]+"${CMAKE_ARGS[@]}"}
+          cmake . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_STD_LIBRARIES=ON ${CMAKE_ARGS[@]+"${CMAKE_ARGS[@]}"}
           cmake --build build --config Release
 
       - name: Copy files
