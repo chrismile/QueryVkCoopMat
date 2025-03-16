@@ -229,8 +229,11 @@ int main() {
 
     auto* instance = new sgl::vk::Instance;
     instance->createInstance({}, false);
-    auto* device = new sgl::vk::Device;
+
     std::vector<const char*> optionalDeviceExtensions;
+    std::vector<const char*> requiredDeviceExtensions = {
+            VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME
+    };
     sgl::vk::DeviceFeatures requestedDeviceFeatures{};
     requestedDeviceFeatures.optionalVulkan12Features.shaderFloat16 = VK_TRUE;
     requestedDeviceFeatures.optionalVulkan11Features.storageBuffer16BitAccess = VK_TRUE;
@@ -248,15 +251,32 @@ int main() {
 #ifdef VK_KHR_cooperative_matrix
     optionalDeviceExtensions.push_back(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
 #endif
-    device->createDeviceHeadless(
-            instance, {
-                    VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME
-            },
-            optionalDeviceExtensions, requestedDeviceFeatures);
 
-    checkCooperativeMatrixFeatures(device);
+    std::vector<VkPhysicalDevice> physicalDevices = sgl::vk::enumeratePhysicalDevices(instance);
+    std::vector<VkPhysicalDevice> suitablePhysicalDevices;
+    for (auto& physicalDevice : physicalDevices) {
+        if (sgl::vk::checkIsPhysicalDeviceSuitable(
+                instance, physicalDevice, nullptr, requiredDeviceExtensions, requestedDeviceFeatures, true)) {
+            suitablePhysicalDevices.push_back(physicalDevice);
+        }
+    }
+    for (size_t i = 0; i < suitablePhysicalDevices.size(); i++) {
+        if (i != 0) {
+            std::cout << std::endl << "--------------------------------------------" << std::endl << std::endl;
+        }
+        sgl::Logfile::get()->write("<br><hr><br>\n");
+        auto physicalDevice = suitablePhysicalDevices.at(i);
+        auto* device = new sgl::vk::Device;
+        device->createDeviceHeadlessFromPhysicalDevice(
+                instance, physicalDevice, requiredDeviceExtensions,
+                optionalDeviceExtensions, requestedDeviceFeatures, true);
+        checkCooperativeMatrixFeatures(device);
+        delete device;
+        if (i == suitablePhysicalDevices.size() - 1) {
+            sgl::Logfile::get()->write("<br><hr>\n");
+        }
+    }
 
-    delete device;
     delete instance;
 
 #ifdef _WIN32
