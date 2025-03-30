@@ -27,25 +27,13 @@
  */
 
 #include <iostream>
-#include <map>
+#include <utility>
 
 #include <Utils/File/Logfile.hpp>
 #include <Graphics/Vulkan/Utils/Instance.hpp>
 #include <Graphics/Vulkan/Utils/Device.hpp>
 
-/*const char* const COMPONENT_TYPE_NAMES[] = {
-        "float16", // VK_COMPONENT_TYPE_FLOAT16_KHR,
-        "float32", // VK_COMPONENT_TYPE_FLOAT32_KHR,
-        "float64", // VK_COMPONENT_TYPE_FLOAT64_KHR,
-        "sint8",   // VK_COMPONENT_TYPE_SINT8_KHR,
-        "sint16",  // VK_COMPONENT_TYPE_SINT16_KHR,
-        "sint32",  // VK_COMPONENT_TYPE_SINT32_KHR,
-        "sint64",  // VK_COMPONENT_TYPE_SINT64_KHR,
-        "uint8",   // VK_COMPONENT_TYPE_UINT8_KHR,
-        "uint16",  // VK_COMPONENT_TYPE_UINT16_KHR,
-        "uint32",  // VK_COMPONENT_TYPE_UINT32_KHR,
-        "uint64",  // VK_COMPONENT_TYPE_UINT64_KHR,
-};*/
+#include "OffscreenContextGL.hpp"
 
 #define RES_TO_STR(r) case r: return #r
 
@@ -73,6 +61,16 @@ std::string getComponentTypeString(VkComponentTypeKHR compType) {
             return "uint32";
         case VK_COMPONENT_TYPE_UINT64_KHR:
             return "uint64";
+        case VK_COMPONENT_TYPE_BFLOAT16_KHR:
+            return "bloat16";
+        case VK_COMPONENT_TYPE_SINT8_PACKED_NV:
+            return "sint8_packed";
+        case VK_COMPONENT_TYPE_UINT8_PACKED_NV:
+            return "uint8_packed";
+        case VK_COMPONENT_TYPE_FLOAT_E4M3_NV:
+            return "float_e4m3";
+        case VK_COMPONENT_TYPE_FLOAT_E5M2_NV:
+            return "float_e5m2";
         default:
             return "UNKNOWN";
     }
@@ -93,9 +91,70 @@ std::string getScopeString(VkScopeKHR scope) {
     }
 }
 
+std::string shaderStagesToString(VkShaderStageFlags stageFlags) {
+    std::vector<std::string> shaderStageNames;
+    if ((stageFlags & VK_SHADER_STAGE_VERTEX_BIT) != 0) {
+        shaderStageNames.emplace_back("VERTEX");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT) != 0) {
+        shaderStageNames.emplace_back("TESSELLATION_CONTROL");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT) != 0) {
+        shaderStageNames.emplace_back("TESSELLATION_EVALUATION");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_GEOMETRY_BIT) != 0) {
+        shaderStageNames.emplace_back("GEOMETRY");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_FRAGMENT_BIT) != 0) {
+        shaderStageNames.emplace_back("FRAGMENT");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_COMPUTE_BIT) != 0) {
+        shaderStageNames.emplace_back("COMPUTE");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_RAYGEN_BIT_KHR) != 0) {
+        shaderStageNames.emplace_back("RAYGEN");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_ANY_HIT_BIT_KHR) != 0) {
+        shaderStageNames.emplace_back("ANY_HIT");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR) != 0) {
+        shaderStageNames.emplace_back("CLOSEST_HIT");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_MISS_BIT_KHR) != 0) {
+        shaderStageNames.emplace_back("MISS");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_INTERSECTION_BIT_KHR) != 0) {
+        shaderStageNames.emplace_back("INTERSECTION");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_CALLABLE_BIT_KHR) != 0) {
+        shaderStageNames.emplace_back("CALLABLE");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_TASK_BIT_EXT) != 0) {
+        shaderStageNames.emplace_back("TASK");
+    }
+    if ((stageFlags & VK_SHADER_STAGE_MESH_BIT_EXT) != 0) {
+        shaderStageNames.emplace_back("MESH");
+    }
+    std::string shaderStages;
+    for (size_t i = 0; i < shaderStageNames.size(); i++) {
+        if (i != 0) {
+            shaderStages += " | ";
+        }
+        shaderStages += shaderStageNames.at(i);
+    }
+    return shaderStages;
+}
+
+namespace sgl {
+// Override for nicer formating of bools.
+inline std::string toString(bool boolVal) {
+    return boolVal ? "true" : "false";
+}
+}
+
 template<typename... T>
 void writeOut(T... args) {
-    std::string text = (std::string() + ... + sgl::toString(args));
+    std::string text = (std::string() + ... + sgl::toString(std::move(args)));
     sgl::Logfile::get()->write(text, sgl::BLACK);
     std::cout << text << std::endl;
 }
@@ -107,7 +166,6 @@ void checkCooperativeMatrixFeaturesKHR(sgl::vk::Device* device) {
         return;
     }
 
-#ifdef VK_KHR_cooperative_matrix
     const auto& cooperativeMatrixProperties = device->getSupportedCooperativeMatrixPropertiesKHR();
 
     writeOut("");
@@ -124,7 +182,7 @@ void checkCooperativeMatrixFeaturesKHR(sgl::vk::Device* device) {
                 << "\nBType: " << getComponentTypeString(props.BType)
                 << "\nCType: " << getComponentTypeString(props.CType)
                 << "\nResultType: " << getComponentTypeString(props.ResultType)
-                << "\nsaturatingAccumulation: " << props.saturatingAccumulation
+                << "\nsaturatingAccumulation: " << sgl::toString(bool(props.saturatingAccumulation))
                 << "\nscope: " << getScopeString(props.scope)
                 << "\n" << std::endl;
         sgl::Logfile::get()->write("<tr></tr>");
@@ -135,38 +193,32 @@ void checkCooperativeMatrixFeaturesKHR(sgl::vk::Device* device) {
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.BType) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.CType) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.ResultType) +"</td>");
-        sgl::Logfile::get()->write("<td>" + std::to_string(props.saturatingAccumulation) +"</td>");
+        sgl::Logfile::get()->write("<td>" + sgl::toString(bool(props.saturatingAccumulation)) +"</td>");
         sgl::Logfile::get()->write("<td>" + getScopeString(props.scope) +"</td>");
         sgl::Logfile::get()->write("</tr>\n");
     }
     sgl::Logfile::get()->write("</table>\n");
-#endif
 }
 
 void checkCooperativeMatrixFeaturesNV2(sgl::vk::Device* device) {
-#ifdef VK_NV_cooperative_matrix2
     if (!device->isDeviceExtensionSupported(VK_NV_COOPERATIVE_MATRIX_2_EXTENSION_NAME)) {
-#endif
         writeOut("");
         writeOut("VK_NV_cooperative_matrix2 is not supported.");
         return;
-#ifdef VK_NV_cooperative_matrix2
     }
-#endif
 
-#ifdef VK_NV_cooperative_matrix2
     const auto& features = device->getCooperativeMatrix2FeaturesNV();
     const auto& properties = device->getCooperativeMatrix2PropertiesNV();
     const auto& flexibleDimensionsProperties = device->getSupportedCooperativeMatrixFlexibleDimensionsPropertiesNV();
     writeOut("");
     writeOut("VK_NV_cooperative_matrix2 properties:");
-    writeOut("cooperativeMatrixWorkgroupScope: ", features.cooperativeMatrixWorkgroupScope);
-    writeOut("cooperativeMatrixFlexibleDimensions: ", features.cooperativeMatrixFlexibleDimensions);
-    writeOut("cooperativeMatrixReductions: ", features.cooperativeMatrixReductions);
-    writeOut("cooperativeMatrixConversions: ", features.cooperativeMatrixConversions);
-    writeOut("cooperativeMatrixPerElementOperations: ", features.cooperativeMatrixPerElementOperations);
-    writeOut("cooperativeMatrixTensorAddressing: ", features.cooperativeMatrixTensorAddressing);
-    writeOut("cooperativeMatrixBlockLoads: ", features.cooperativeMatrixBlockLoads);
+    writeOut("cooperativeMatrixWorkgroupScope: ", bool(features.cooperativeMatrixWorkgroupScope));
+    writeOut("cooperativeMatrixFlexibleDimensions: ", bool(features.cooperativeMatrixFlexibleDimensions));
+    writeOut("cooperativeMatrixReductions: ", bool(features.cooperativeMatrixReductions));
+    writeOut("cooperativeMatrixConversions: ", bool(features.cooperativeMatrixConversions));
+    writeOut("cooperativeMatrixPerElementOperations: ", bool(features.cooperativeMatrixPerElementOperations));
+    writeOut("cooperativeMatrixTensorAddressing: ", bool(features.cooperativeMatrixTensorAddressing));
+    writeOut("cooperativeMatrixBlockLoads: ", bool(features.cooperativeMatrixBlockLoads));
     writeOut("cooperativeMatrixWorkgroupScopeMaxWorkgroupSize: ", properties.cooperativeMatrixWorkgroupScopeMaxWorkgroupSize);
     writeOut("cooperativeMatrixFlexibleDimensionsMaxDimension: ", properties.cooperativeMatrixFlexibleDimensionsMaxDimension);
     writeOut("cooperativeMatrixWorkgroupScopeReservedSharedMemory: ", properties.cooperativeMatrixWorkgroupScopeReservedSharedMemory);
@@ -182,7 +234,7 @@ void checkCooperativeMatrixFeaturesNV2(sgl::vk::Device* device) {
                 << "\nBType: " << getComponentTypeString(props.BType)
                 << "\nCType: " << getComponentTypeString(props.CType)
                 << "\nResultType: " << getComponentTypeString(props.ResultType)
-                << "\nsaturatingAccumulation: " << props.saturatingAccumulation
+                << "\nsaturatingAccumulation: " << sgl::toString(bool(props.saturatingAccumulation))
                 << "\nscope: " << getScopeString(props.scope)
                 << "\nworkgroupInvocations: " << props.workgroupInvocations
                 << "\n" << std::endl;
@@ -194,13 +246,54 @@ void checkCooperativeMatrixFeaturesNV2(sgl::vk::Device* device) {
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.BType) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.CType) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.ResultType) +"</td>");
-        sgl::Logfile::get()->write("<td>" + std::to_string(props.saturatingAccumulation) +"</td>");
+        sgl::Logfile::get()->write("<td>" + sgl::toString(bool(props.saturatingAccumulation)) +"</td>");
         sgl::Logfile::get()->write("<td>" + getScopeString(props.scope) +"</td>");
         sgl::Logfile::get()->write("<td>" + std::to_string(props.workgroupInvocations) +"</td>");
         sgl::Logfile::get()->write("</tr>\n");
     }
     sgl::Logfile::get()->write("</table>\n");
-#endif
+}
+
+void checkCooperativeVectorFeaturesNV(sgl::vk::Device* device) {
+    if (!device->isDeviceExtensionSupported(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME)) {
+        writeOut("");
+        writeOut("VK_NV_cooperative_vector is not supported.");
+        return;
+    }
+
+    const auto& features = device->getCooperativeVectorFeaturesNV();
+    const auto& properties = device->getCooperativeVectorPropertiesNV();
+    const auto& supportedProperties = device->getSupportedCooperativeVectorPropertiesNV();
+    writeOut("");
+    writeOut("VK_NV_cooperative_vector properties:");
+    writeOut("cooperativeVector: ", bool(features.cooperativeVector));
+    writeOut("cooperativeVectorTraining: ", bool(features.cooperativeVectorTraining));
+    writeOut("cooperativeVectorSupportedStages: ", shaderStagesToString(properties.cooperativeVectorSupportedStages));
+    writeOut("cooperativeVectorTrainingFloat16Accumulation: ", properties.cooperativeVectorTrainingFloat16Accumulation);
+    writeOut("cooperativeVectorTrainingFloat32Accumulation: ", properties.cooperativeVectorTrainingFloat32Accumulation);
+    writeOut("maxCooperativeVectorComponents: ", properties.maxCooperativeVectorComponents);
+    writeOut("");
+    sgl::Logfile::get()->write("<table><tr><th>inputType</th><th>inputInterpretation</th><th>matrixInterpretation</th><th>biasInterpretation</th><th>resultType</th><th>transpose</th></tr>\n");
+    for (size_t i = 0; i < supportedProperties.size(); i++) {
+        auto& props = supportedProperties[i];
+        std::cout
+                << "inputType: " << getComponentTypeString(props.inputType)
+                << "\ninputInterpretation: " << getComponentTypeString(props.inputInterpretation)
+                << "\nmatrixInterpretation: " << getComponentTypeString(props.matrixInterpretation)
+                << "\nbiasInterpretation: " << getComponentTypeString(props.biasInterpretation)
+                << "\nresultType: " << getComponentTypeString(props.resultType)
+                << "\ntranspose: " << sgl::toString(bool(props.transpose))
+                << "\n" << std::endl;
+        sgl::Logfile::get()->write("<tr></tr>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.inputType) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.inputInterpretation) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.matrixInterpretation) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.biasInterpretation) +"</td>");
+        sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.resultType) +"</td>");
+        sgl::Logfile::get()->write("<td>" + sgl::toString(bool(props.transpose) +"</td>"));
+        sgl::Logfile::get()->write("</tr>\n");
+    }
+    sgl::Logfile::get()->write("</table>\n");
 }
 
 void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
@@ -220,8 +313,14 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
         writeOut("Max subgroup size: ", device->getPhysicalDeviceVulkan13Properties().maxSubgroupSize);
     }
 
+    writeOut("");
+    writeOut("Shader int8 support: ", bool(device->getPhysicalDeviceVulkan12Features().shaderInt8));
+    writeOut("Shader float16 support: ", bool(device->getPhysicalDeviceVulkan12Features().shaderFloat16));
+    writeOut("Shader bfloat16 support: ", bool(device->getPhysicalDeviceShaderBfloat16Features().shaderBFloat16Type));
+
     checkCooperativeMatrixFeaturesKHR(device);
     checkCooperativeMatrixFeaturesNV2(device);
+    checkCooperativeVectorFeaturesNV(device);
 }
 
 int main() {
@@ -229,28 +328,26 @@ int main() {
 
     auto* instance = new sgl::vk::Instance;
     instance->createInstance({}, false);
+    sgl::Logfile::get()->write("<br>\n");
+    bool isEglInitialized = loadEglLibrary();
 
     std::vector<const char*> optionalDeviceExtensions;
     std::vector<const char*> requiredDeviceExtensions = {
             VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME
     };
     sgl::vk::DeviceFeatures requestedDeviceFeatures{};
+    requestedDeviceFeatures.optionalVulkan12Features.shaderInt8 = VK_TRUE;
     requestedDeviceFeatures.optionalVulkan12Features.shaderFloat16 = VK_TRUE;
     requestedDeviceFeatures.optionalVulkan11Features.storageBuffer16BitAccess = VK_TRUE;
     requestedDeviceFeatures.optionalVulkan12Features.vulkanMemoryModel = VK_TRUE; // For cooperative matrices.
     requestedDeviceFeatures.optionalVulkan12Features.vulkanMemoryModelDeviceScope = VK_TRUE; // For cooperative matrices.
-#ifdef VK_VERSION_1_3
     requestedDeviceFeatures.optionalVulkan13Features.subgroupSizeControl = VK_TRUE;
-#endif
-#ifdef VK_NV_cooperative_matrix
+    optionalDeviceExtensions.push_back(VK_KHR_SHADER_BFLOAT16_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_MATRIX_EXTENSION_NAME);
-#endif
-#ifdef VK_NV_cooperative_matrix2
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_MATRIX_2_EXTENSION_NAME);
-#endif
-#ifdef VK_KHR_cooperative_matrix
+    optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
-#endif
+    optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
 
     std::vector<VkPhysicalDevice> physicalDevices = sgl::vk::enumeratePhysicalDevices(instance);
     std::vector<VkPhysicalDevice> suitablePhysicalDevices;
@@ -270,6 +367,9 @@ int main() {
         device->createDeviceHeadlessFromPhysicalDevice(
                 instance, physicalDevice, requiredDeviceExtensions,
                 optionalDeviceExtensions, requestedDeviceFeatures, true);
+        if (isEglInitialized) {
+            checkEglFeatures(device);
+        }
         checkCooperativeMatrixFeatures(device);
         delete device;
         if (i == suitablePhysicalDevices.size() - 1) {
@@ -277,6 +377,7 @@ int main() {
         }
     }
 
+    releaseEglLibrary();
     delete instance;
 
 #ifdef _WIN32
