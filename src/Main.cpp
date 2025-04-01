@@ -33,7 +33,9 @@
 #include <Graphics/Vulkan/Utils/Instance.hpp>
 #include <Graphics/Vulkan/Utils/Device.hpp>
 
+#ifdef __linux__
 #include "OffscreenContextGL.hpp"
+#endif
 
 #define RES_TO_STR(r) case r: return #r
 
@@ -290,7 +292,7 @@ void checkCooperativeVectorFeaturesNV(sgl::vk::Device* device) {
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.matrixInterpretation) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.biasInterpretation) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.resultType) +"</td>");
-        sgl::Logfile::get()->write("<td>" + sgl::toString(bool(props.transpose) +"</td>"));
+        sgl::Logfile::get()->write("<td>" + sgl::toString(bool(props.transpose)) + "</td>");
         sgl::Logfile::get()->write("</tr>\n");
     }
     sgl::Logfile::get()->write("</table>\n");
@@ -328,8 +330,10 @@ int main() {
 
     auto* instance = new sgl::vk::Instance;
     instance->createInstance({}, false);
+#ifdef __linux__
     sgl::Logfile::get()->write("<br>\n");
     bool isEglInitialized = loadEglLibrary();
+#endif
 
     std::vector<const char*> optionalDeviceExtensions;
     std::vector<const char*> requiredDeviceExtensions = {
@@ -367,9 +371,11 @@ int main() {
         device->createDeviceHeadlessFromPhysicalDevice(
                 instance, physicalDevice, requiredDeviceExtensions,
                 optionalDeviceExtensions, requestedDeviceFeatures, true);
+#ifdef __linux__
         if (isEglInitialized) {
             checkEglFeatures(device);
         }
+#endif
         checkCooperativeMatrixFeatures(device);
         delete device;
         if (i == suitablePhysicalDevices.size() - 1) {
@@ -377,7 +383,9 @@ int main() {
         }
     }
 
+#ifdef __linux__
     releaseEglLibrary();
+#endif
     delete instance;
 
 #ifdef _WIN32
