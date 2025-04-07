@@ -702,6 +702,8 @@ std::string convertDrmVendorIdToString(uint64_t vendorId) {
         return "AMLOGIC";
     case DRM_FORMAT_MOD_VENDOR_MTK:
         return "MTK";
+    default:
+        return "UNKNOWN";
     }
 }
 

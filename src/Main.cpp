@@ -365,8 +365,8 @@ void querySingleImageDrmFormatModifiers(sgl::vk::Device* device, VkFormat format
     formatFile << "<br><hr>\n";
 }
 
-void queryImageDrmFormatModifiers(sgl::vk::Device* device) {
-    std::ofstream formatFile("FormatInfoDRM.html");
+void queryImageDrmFormatModifiers(size_t deviceIdx, sgl::vk::Device* device) {
+    std::ofstream formatFile("FormatInfoDRM_" + std::to_string(deviceIdx) + ".html");
     formatFile << "<html><head><title>Vulkan Image Format DRM Info</title>";
     formatFile << "\n<style>\n";
     formatFile << "table {\ntext-align: center;\n}\n";
@@ -376,6 +376,14 @@ void queryImageDrmFormatModifiers(sgl::vk::Device* device) {
     formatFile << "<table width='100%%' bgcolor='#E0E0E5'><tr><td><font face='arial' size='+2'>";
     formatFile << "Vulkan Image Format DRM Info";
     formatFile << "</font></td></tr></table>\n<br>";
+
+    formatFile << "Device name: " << device->getDeviceName() << "<br>\n";
+    if (device->getPhysicalDeviceProperties().apiVersion >= VK_API_VERSION_1_1) {
+        formatFile << "Device driver name: " << device->getDeviceDriverName() << "<br>\n";
+        formatFile << "Device driver info: " << device->getDeviceDriverInfo() << "<br>\n";
+        formatFile << "Device driver ID: " << device->getDeviceDriverId() << "<br>\n";
+    }
+    formatFile << "<br><hr>\n";
 
     querySingleImageDrmFormatModifiers(device, VK_FORMAT_R8G8B8A8_UNORM, formatFile);
     querySingleImageDrmFormatModifiers(device, VK_FORMAT_B8G8R8A8_UNORM, formatFile);
@@ -413,7 +421,8 @@ int main(int argc, char *argv[]) {
 #endif
         }
 #ifdef __linux__
-        else if (command == "--test-drm-format") {
+        else if (command == "--test-drm-format" || command == "--test-drm-formats" || command == "--drm-formats"
+                || "--drm") {
             shallTestDrmFormatModifiers = true;
         }
 #endif
@@ -484,7 +493,7 @@ int main(int argc, char *argv[]) {
 #ifdef __linux__
         if (shallTestDrmFormatModifiers && device->getApiVersion() >= VK_API_VERSION_1_3
                 && device->isDeviceExtensionSupported(VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME)) {
-            queryImageDrmFormatModifiers(device);
+            queryImageDrmFormatModifiers(i, device);
         }
 #endif
         delete device;
