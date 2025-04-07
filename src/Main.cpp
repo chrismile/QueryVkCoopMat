@@ -401,18 +401,28 @@ void queryImageDrmFormatModifiers(sgl::vk::Device* device) {
 #endif
 
 int main(int argc, char *argv[]) {
-    sgl::Logfile::get()->createLogfile("Logfile.html", "QueryVkCoopMat");
-
 #ifdef __linux__
     bool shallTestDrmFormatModifiers = false;
+#endif
     for (int i = 1; i < argc; i++) {
         std::string command = argv[i];
-        if (command == "--test-drm-format") {
+        if (command == "--help" || command == "-h") {
+            std::cout << "QueryVkCoopMat: Queries Vulkan cooperative matrix support." << std::endl;
+#ifdef __linux__
+            std::cout << "Optional argument: --test-drm-format (queries Linux DRM image format modifiers)" << std::endl;
+#endif
+        }
+#ifdef __linux__
+        else if (command == "--test-drm-format") {
             shallTestDrmFormatModifiers = true;
         }
-    }
 #endif
+        else {
+            throw std::runtime_error("Invalid command line arguments.");
+        }
+    }
 
+    sgl::Logfile::get()->createLogfile("Logfile.html", "QueryVkCoopMat");
     sgl::Logfile::get()->write("\n<style>\n");
     sgl::Logfile::get()->write("table {\nborder-spacing: 10px 0;\n}\n");
     sgl::Logfile::get()->write("</style>\n");
