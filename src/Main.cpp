@@ -35,6 +35,7 @@
 
 #ifdef __linux__
 #include "OffscreenContextGL.hpp"
+#include "FormatInfo.hpp"
 #endif
 
 #define RES_TO_STR(r) case r: return #r
@@ -325,8 +326,57 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
     checkCooperativeVectorFeaturesNV(device);
 }
 
-int main() {
+#ifdef __linux__
+void querySingleImageDrmFormatModifiers(sgl::vk::Device* device, VkFormat format) {
+    VkDrmFormatModifierPropertiesListEXT drmFormatModifierPropertiesList{};
+    drmFormatModifierPropertiesList.sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT;
+    VkDrmFormatModifierPropertiesList2EXT drmFormatModifierPropertiesList2{};
+    drmFormatModifierPropertiesList2.sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT;
+    VkFormatProperties2 formatProperties2{};
+    formatProperties2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+    formatProperties2.pNext = &drmFormatModifierPropertiesList;
+    device->getPhysicalDeviceFormatProperties2(format, formatProperties2);
+    writeOut("");
+    writeOut("Format name: ", convertVkFormatToString(format));
+    if (drmFormatModifierPropertiesList.drmFormatModifierCount == 0) {
+        return;
+    }
+    drmFormatModifierPropertiesList.pDrmFormatModifierProperties =
+        new VkDrmFormatModifierPropertiesEXT[drmFormatModifierPropertiesList.drmFormatModifierCount];
+    for (uint32_t i = 0; i < drmFormatModifierPropertiesList.drmFormatModifierCount; i++) {
+        auto& drmFormatModifierProp = drmFormatModifierPropertiesList.pDrmFormatModifierProperties[i];
+        writeOut("");
+        writeOut("- mod: ", drmFormatModifierProp.drmFormatModifier);
+        writeOut("- #planes: ", drmFormatModifierProp.drmFormatModifierPlaneCount);
+        writeOut(
+            "- tiling features: ",
+            convertVkFormatFeatureFlagsToString(drmFormatModifierProp.drmFormatModifierTilingFeatures));
+    }
+    device->getPhysicalDeviceFormatProperties2(format, formatProperties2);
+    delete[] drmFormatModifierPropertiesList.pDrmFormatModifierProperties;
+}
+
+void queryImageDrmFormatModifiers(sgl::vk::Device* device) {
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32G32B32A32_SFLOAT);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32_UINT);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_B8G8R8A8_UNORM);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R8G8B8A8_UNORM);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R16G16B16A16_SFLOAT);
+}
+#endif
+
+int main(int argc, char *argv[]) {
     sgl::Logfile::get()->createLogfile("Logfile.html", "QueryVkCoopMat");
+
+#ifdef __linux__
+    bool shallTestDrmFormatModifiers = false;
+    for (int i = 1; i < argc; i++) {
+        std::string command = argv[i];
+        if (command == "--test-drm-format") {
+            shallTestDrmFormatModifiers = true;
+        }
+    }
+#endif
 
     auto* instance = new sgl::vk::Instance;
     instance->createInstance({}, false);
@@ -352,6 +402,11 @@ int main() {
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
+#ifdef __linux__
+    if (shallTestDrmFormatModifiers) {
+        optionalDeviceExtensions.push_back(VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME);
+    }
+#endif
 
     std::vector<VkPhysicalDevice> physicalDevices = sgl::vk::enumeratePhysicalDevices(instance);
     std::vector<VkPhysicalDevice> suitablePhysicalDevices;
@@ -377,6 +432,12 @@ int main() {
         }
 #endif
         checkCooperativeMatrixFeatures(device);
+#ifdef __linux__
+        if (shallTestDrmFormatModifiers && device->getApiVersion() >= VK_API_VERSION_1_3
+                && device->isDeviceExtensionSupported(VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME)) {
+            queryImageDrmFormatModifiers(device);
+        }
+#endif
         delete device;
         if (i == suitablePhysicalDevices.size() - 1) {
             sgl::Logfile::get()->write("<br><hr>\n");
