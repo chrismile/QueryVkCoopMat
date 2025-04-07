@@ -338,7 +338,7 @@ void querySingleImageDrmFormatModifiers(sgl::vk::Device* device, VkFormat format
     formatProperties2.pNext = &drmFormatModifierPropertiesList;
     device->getPhysicalDeviceFormatProperties2(format, formatProperties2);
     formatFile << "<br>\n";
-    formatFile << "Format name: " << convertVkFormatToString(format) << "<br>\n";
+    formatFile << "Format name: <b>" << convertVkFormatToString(format) << "</b><br>\n";
     formatFile << "Linear tiling features: " << convertVkFormatFeatureFlagsToString(
         formatProperties2.formatProperties.linearTilingFeatures) << "<br>\n";
     formatFile << "Optimal tiling features: " << convertVkFormatFeatureFlagsToString(
@@ -377,11 +377,23 @@ void queryImageDrmFormatModifiers(sgl::vk::Device* device) {
     formatFile << "Vulkan Image Format DRM Info";
     formatFile << "</font></td></tr></table>\n<br>";
 
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32G32B32A32_SFLOAT, formatFile);
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32_UINT, formatFile);
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_B8G8R8A8_UNORM, formatFile);
     querySingleImageDrmFormatModifiers(device, VK_FORMAT_R8G8B8A8_UNORM, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_B8G8R8A8_UNORM, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R8G8B8A8_SRGB, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_B8G8R8A8_SRGB, formatFile);
+
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_D32_SFLOAT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32_SFLOAT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32G32_SFLOAT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32G32B32_SFLOAT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32G32B32A32_SFLOAT, formatFile);
+
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R16_SFLOAT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R16G16_SFLOAT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R16G16B16_SFLOAT, formatFile);
     querySingleImageDrmFormatModifiers(device, VK_FORMAT_R16G16B16A16_SFLOAT, formatFile);
+
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32_UINT, formatFile);
 
     formatFile << "</font></body></html>";
     formatFile.close();
