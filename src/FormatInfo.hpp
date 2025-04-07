@@ -29,6 +29,8 @@
 #ifndef FORMATINFO_HPP
 #define FORMATINFO_HPP
 
+#include "drm_fourcc.h"
+
 inline std::string convertVkFormatToString(VkFormat format) {
     switch(format) {
     case VK_FORMAT_UNDEFINED:
@@ -672,6 +674,51 @@ std::string convertVkFormatFeatureFlagsToString(VkFormatFeatureFlags flags) {
         featureFlagsString += featureFlagNames.at(i);
     }
     return featureFlagsString;
+}
+
+std::string convertDrmVendorIdToString(uint64_t vendorId) {
+    switch(vendorId) {
+    case DRM_FORMAT_MOD_VENDOR_NONE:
+        return "NONE";
+    case DRM_FORMAT_MOD_VENDOR_INTEL:
+        return "INTEL";
+    case DRM_FORMAT_MOD_VENDOR_AMD:
+        return "AMD";
+    case DRM_FORMAT_MOD_VENDOR_NVIDIA:
+        return "NVIDIA";
+    case DRM_FORMAT_MOD_VENDOR_SAMSUNG:
+        return "SAMSUNG";
+    case DRM_FORMAT_MOD_VENDOR_QCOM:
+        return "QCOM";
+    case DRM_FORMAT_MOD_VENDOR_VIVANTE:
+        return "VIVANTE";
+    case DRM_FORMAT_MOD_VENDOR_BROADCOM:
+        return "BROADCOM";
+    case DRM_FORMAT_MOD_VENDOR_ARM:
+        return "ARM";
+    case DRM_FORMAT_MOD_VENDOR_ALLWINNER:
+        return "ALLWINNER";
+    case DRM_FORMAT_MOD_VENDOR_AMLOGIC:
+        return "AMLOGIC";
+    case DRM_FORMAT_MOD_VENDOR_MTK:
+        return "MTK";
+    }
+}
+
+/*
+ * Uses information from:
+ * https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/include/uapi/drm/drm_fourcc.h
+ */
+std::string convertDrmFormatModifierToString(uint64_t formatModifier) {
+    if (formatModifier == DRM_FORMAT_MOD_INVALID) {
+        return "INVALID";
+    }
+    if (formatModifier == DRM_FORMAT_MOD_LINEAR) {
+        return "LINEAR";
+    }
+    auto vendorId = fourcc_mod_get_vendor(formatModifier);
+    auto vendorName = convertDrmVendorIdToString(vendorId);
+    return sgl::toHexString(formatModifier) + " (" + vendorName + ")";
 }
 
 #endif //FORMATINFO_HPP

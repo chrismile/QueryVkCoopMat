@@ -34,6 +34,7 @@
 #include <Graphics/Vulkan/Utils/Device.hpp>
 
 #ifdef __linux__
+#include <fstream>
 #include "OffscreenContextGL.hpp"
 #include "FormatInfo.hpp"
 #endif
@@ -188,7 +189,7 @@ void checkCooperativeMatrixFeaturesKHR(sgl::vk::Device* device) {
                 << "\nsaturatingAccumulation: " << sgl::toString(bool(props.saturatingAccumulation))
                 << "\nscope: " << getScopeString(props.scope)
                 << "\n" << std::endl;
-        sgl::Logfile::get()->write("<tr></tr>");
+        sgl::Logfile::get()->write("<tr>");
         sgl::Logfile::get()->write("<td>" + std::to_string(props.MSize) +"</td>");
         sgl::Logfile::get()->write("<td>" + std::to_string(props.NSize) +"</td>");
         sgl::Logfile::get()->write("<td>" + std::to_string(props.KSize) +"</td>");
@@ -241,7 +242,7 @@ void checkCooperativeMatrixFeaturesNV2(sgl::vk::Device* device) {
                 << "\nscope: " << getScopeString(props.scope)
                 << "\nworkgroupInvocations: " << props.workgroupInvocations
                 << "\n" << std::endl;
-        sgl::Logfile::get()->write("<tr></tr>");
+        sgl::Logfile::get()->write("<tr>");
         sgl::Logfile::get()->write("<td>" + std::to_string(props.MGranularity) +"</td>");
         sgl::Logfile::get()->write("<td>" + std::to_string(props.NGranularity) +"</td>");
         sgl::Logfile::get()->write("<td>" + std::to_string(props.KGranularity) +"</td>");
@@ -287,7 +288,7 @@ void checkCooperativeVectorFeaturesNV(sgl::vk::Device* device) {
                 << "\nresultType: " << getComponentTypeString(props.resultType)
                 << "\ntranspose: " << sgl::toString(bool(props.transpose))
                 << "\n" << std::endl;
-        sgl::Logfile::get()->write("<tr></tr>");
+        sgl::Logfile::get()->write("<tr>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.inputType) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.inputInterpretation) +"</td>");
         sgl::Logfile::get()->write("<td>" + getComponentTypeString(props.matrixInterpretation) +"</td>");
@@ -327,41 +328,63 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
 }
 
 #ifdef __linux__
-void querySingleImageDrmFormatModifiers(sgl::vk::Device* device, VkFormat format) {
+void querySingleImageDrmFormatModifiers(sgl::vk::Device* device, VkFormat format, std::ofstream& formatFile) {
     VkDrmFormatModifierPropertiesListEXT drmFormatModifierPropertiesList{};
     drmFormatModifierPropertiesList.sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT;
-    VkDrmFormatModifierPropertiesList2EXT drmFormatModifierPropertiesList2{};
-    drmFormatModifierPropertiesList2.sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT;
+    //VkDrmFormatModifierPropertiesList2EXT drmFormatModifierPropertiesList2{};
+    //drmFormatModifierPropertiesList2.sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT;
     VkFormatProperties2 formatProperties2{};
     formatProperties2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
     formatProperties2.pNext = &drmFormatModifierPropertiesList;
     device->getPhysicalDeviceFormatProperties2(format, formatProperties2);
-    writeOut("");
-    writeOut("Format name: ", convertVkFormatToString(format));
-    if (drmFormatModifierPropertiesList.drmFormatModifierCount == 0) {
-        return;
+    formatFile << "<br>\n";
+    formatFile << "Format name: " << convertVkFormatToString(format) << "<br>\n";
+    formatFile << "Linear tiling features: " << convertVkFormatFeatureFlagsToString(
+        formatProperties2.formatProperties.linearTilingFeatures) << "<br>\n";
+    formatFile << "Optimal tiling features: " << convertVkFormatFeatureFlagsToString(
+        formatProperties2.formatProperties.optimalTilingFeatures) << "<br>\n";
+    formatFile << "Buffer features: " << convertVkFormatFeatureFlagsToString(
+        formatProperties2.formatProperties.bufferFeatures) << "<br>\n";
+    if (drmFormatModifierPropertiesList.drmFormatModifierCount != 0) {
+        drmFormatModifierPropertiesList.pDrmFormatModifierProperties =
+            new VkDrmFormatModifierPropertiesEXT[drmFormatModifierPropertiesList.drmFormatModifierCount];
+        device->getPhysicalDeviceFormatProperties2(format, formatProperties2);
+        formatFile << "<br>\n";
+        formatFile << "<table><tr><th>Modifier</th><th>Plane Count</th><th>Tiling Features</th></tr>\n";
+        for (uint32_t i = 0; i < drmFormatModifierPropertiesList.drmFormatModifierCount; i++) {
+            auto& drmFormatModifierProp = drmFormatModifierPropertiesList.pDrmFormatModifierProperties[i];
+            formatFile << "<tr>";
+            formatFile << "<td>" << convertDrmFormatModifierToString(drmFormatModifierProp.drmFormatModifier) << "</td>";
+            formatFile << "<td>" << drmFormatModifierProp.drmFormatModifierPlaneCount << "</td>";
+            formatFile << "<td>" << convertVkFormatFeatureFlagsToString(drmFormatModifierProp.drmFormatModifierTilingFeatures) << "</td>";
+            formatFile << "</tr>\n";
+        }
+        formatFile << "</table>\n";
+        delete[] drmFormatModifierPropertiesList.pDrmFormatModifierProperties;
     }
-    drmFormatModifierPropertiesList.pDrmFormatModifierProperties =
-        new VkDrmFormatModifierPropertiesEXT[drmFormatModifierPropertiesList.drmFormatModifierCount];
-    for (uint32_t i = 0; i < drmFormatModifierPropertiesList.drmFormatModifierCount; i++) {
-        auto& drmFormatModifierProp = drmFormatModifierPropertiesList.pDrmFormatModifierProperties[i];
-        writeOut("");
-        writeOut("- mod: ", drmFormatModifierProp.drmFormatModifier);
-        writeOut("- #planes: ", drmFormatModifierProp.drmFormatModifierPlaneCount);
-        writeOut(
-            "- tiling features: ",
-            convertVkFormatFeatureFlagsToString(drmFormatModifierProp.drmFormatModifierTilingFeatures));
-    }
-    device->getPhysicalDeviceFormatProperties2(format, formatProperties2);
-    delete[] drmFormatModifierPropertiesList.pDrmFormatModifierProperties;
+    formatFile << "<br><hr>\n";
 }
 
 void queryImageDrmFormatModifiers(sgl::vk::Device* device) {
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32G32B32A32_SFLOAT);
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32_UINT);
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_B8G8R8A8_UNORM);
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R8G8B8A8_UNORM);
-    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R16G16B16A16_SFLOAT);
+    std::ofstream formatFile("FormatInfoDRM.html");
+    formatFile << "<html><head><title>Vulkan Image Format DRM Info</title>";
+    formatFile << "\n<style>\n";
+    formatFile << "table {\ntext-align: center;\n}\n";
+    formatFile << "</style>\n";
+    formatFile << "</head>";
+    formatFile << "<body><font face='courier new'>";
+    formatFile << "<table width='100%%' bgcolor='#E0E0E5'><tr><td><font face='arial' size='+2'>";
+    formatFile << "Vulkan Image Format DRM Info";
+    formatFile << "</font></td></tr></table>\n<br>";
+
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32G32B32A32_SFLOAT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32_UINT, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_B8G8R8A8_UNORM, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R8G8B8A8_UNORM, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_R16G16B16A16_SFLOAT, formatFile);
+
+    formatFile << "</font></body></html>";
+    formatFile.close();
 }
 #endif
 
@@ -377,6 +400,10 @@ int main(int argc, char *argv[]) {
         }
     }
 #endif
+
+    sgl::Logfile::get()->write("\n<style>\n");
+    sgl::Logfile::get()->write("table {\nborder-spacing: 10px 0;\n}\n");
+    sgl::Logfile::get()->write("</style>\n");
 
     auto* instance = new sgl::vk::Instance;
     instance->createInstance({}, false);

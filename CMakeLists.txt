@@ -53,6 +53,7 @@ target_include_directories(QueryVkCoopMat PRIVATE third_party/sgl/src/Graphics/V
 target_include_directories(QueryVkCoopMat PRIVATE third_party/sgl/src/Graphics/Vulkan/libs/Vulkan-Headers)
 target_include_directories(QueryVkCoopMat PRIVATE third_party/sgl/src/Graphics/Vulkan/libs/EGL)
 target_include_directories(QueryVkCoopMat PRIVATE third_party/sgl/src/Graphics/Vulkan/libs/KHR)
+target_include_directories(QueryVkCoopMat PRIVATE third_party/linux-kernel)
 target_compile_definitions(QueryVkCoopMat PRIVATE DLL_OBJECT=)
 target_compile_definitions(QueryVkCoopMat PRIVATE SUPPORT_VULKAN)
 target_compile_definitions(QueryVkCoopMat PRIVATE DISABLE_VULKAN_SWAPCHAIN_SUPPORT)
