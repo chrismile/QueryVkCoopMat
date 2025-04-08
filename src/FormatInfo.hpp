@@ -29,6 +29,7 @@
 #ifndef FORMATINFO_HPP
 #define FORMATINFO_HPP
 
+#include <cstdint>
 #include "drm_fourcc.h"
 
 inline std::string convertVkFormatToString(VkFormat format) {
@@ -711,7 +712,7 @@ std::string convertDrmVendorIdToString(uint64_t vendorId) {
  * Uses information from:
  * https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/include/uapi/drm/drm_fourcc.h
  */
-std::string convertDrmFormatModifierToString(uint64_t formatModifier) {
+inline std::string convertDrmFormatModifierToString(uint64_t formatModifier) {
     if (formatModifier == DRM_FORMAT_MOD_INVALID) {
         return "INVALID";
     }
@@ -719,6 +720,44 @@ std::string convertDrmFormatModifierToString(uint64_t formatModifier) {
         return "LINEAR";
     }
     auto vendorId = fourcc_mod_get_vendor(formatModifier);
+    if (vendorId == DRM_FORMAT_MOD_VENDOR_INTEL) {
+        switch (formatModifier) {
+        case I915_FORMAT_MOD_X_TILED:
+            return "I915_FORMAT_MOD_X_TILED";
+        case I915_FORMAT_MOD_Y_TILED:
+            return "I915_FORMAT_MOD_Y_TILED";
+        case I915_FORMAT_MOD_Yf_TILED:
+            return "I915_FORMAT_MOD_Yf_TILED";
+        case I915_FORMAT_MOD_Y_TILED_CCS:
+            return "I915_FORMAT_MOD_Y_TILED_CCS";
+        case I915_FORMAT_MOD_Yf_TILED_CCS:
+            return "I915_FORMAT_MOD_Yf_TILED_CCS";
+        case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS:
+            return "I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS";
+        case I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
+            return "I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS";
+        case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC:
+            return "I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC";
+        case I915_FORMAT_MOD_4_TILED:
+            return "I915_FORMAT_MOD_4_TILED";
+        case I915_FORMAT_MOD_4_TILED_DG2_RC_CCS:
+            return "I915_FORMAT_MOD_4_TILED_DG2_RC_CCS";
+        case I915_FORMAT_MOD_4_TILED_DG2_MC_CCS:
+            return "I915_FORMAT_MOD_4_TILED_DG2_MC_CCS";
+        case I915_FORMAT_MOD_4_TILED_DG2_RC_CCS_CC:
+            return "I915_FORMAT_MOD_4_TILED_DG2_RC_CCS_CC";
+        case I915_FORMAT_MOD_4_TILED_MTL_RC_CCS:
+            return "I915_FORMAT_MOD_4_TILED_MTL_RC_CCS";
+        case I915_FORMAT_MOD_4_TILED_MTL_MC_CCS:
+            return "I915_FORMAT_MOD_4_TILED_MTL_MC_CCS";
+        case I915_FORMAT_MOD_4_TILED_MTL_RC_CCS_CC:
+            return "I915_FORMAT_MOD_4_TILED_MTL_RC_CCS_CC";
+        case I915_FORMAT_MOD_4_TILED_LNL_CCS:
+            return "I915_FORMAT_MOD_4_TILED_LNL_CCS";
+        case I915_FORMAT_MOD_4_TILED_BMG_CCS:
+            return "I915_FORMAT_MOD_4_TILED_BMG_CCS";
+        }
+    }
     auto vendorName = convertDrmVendorIdToString(vendorId);
     return sgl::toHexString(formatModifier) + " (" + vendorName + ")";
 }
