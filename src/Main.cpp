@@ -403,6 +403,9 @@ void queryImageDrmFormatModifiers(size_t deviceIdx, sgl::vk::Device* device) {
 
     querySingleImageDrmFormatModifiers(device, VK_FORMAT_R32_UINT, formatFile);
 
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_G8_B8R8_2PLANE_420_UNORM, formatFile);
+    querySingleImageDrmFormatModifiers(device, VK_FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16, formatFile);
+
     formatFile << "</font></body></html>";
     formatFile.close();
 }
