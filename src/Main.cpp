@@ -163,6 +163,14 @@ void writeOut(T... args) {
     std::cout << text << std::endl;
 }
 
+std::string uint8ArrayToHex(const uint8_t* arr, size_t numEntries) {
+    std::string hexRep;
+    for (size_t i = 0; i < numEntries; i++) {
+        hexRep += sgl::toHexString(uint32_t(arr[i]));
+    }
+    return hexRep;
+}
+
 void checkCooperativeMatrixFeaturesKHR(sgl::vk::Device* device) {
     if (!device->getCooperativeMatrixFeaturesKHR().cooperativeMatrix) {
         writeOut("");
@@ -307,6 +315,8 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
         writeOut("Device driver name: ", device->getDeviceDriverName());
         writeOut("Device driver info: ", device->getDeviceDriverInfo());
         writeOut("Device driver ID: ", device->getDeviceDriverId());
+        //writeOut("Device driver UUID: ", uint8ArrayToHex(device->getDeviceIDProperties().deviceUUID, VK_UUID_SIZE));
+        //writeOut("Device driver LUID: ", uint8ArrayToHex(device->getDeviceIDProperties().deviceLUID, VK_UUID_SIZE));
     }
 
     writeOut("");
