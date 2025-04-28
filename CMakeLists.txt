@@ -38,6 +38,7 @@ if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src")
 endif()
 
 list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/StringUtils.cpp")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/Env.cpp")
 list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/Dialog.cpp")
 list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/File/Execute.cpp")
 list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sgl/src/Utils/File/Logfile.cpp")
