@@ -34,7 +34,10 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "OffscreenContextGL.hpp"
+#include "OffscreenContextEGL.hpp"
+
+#define GLAPIENTRY EGLAPIENTRY
+#include "GLCommon.hpp"
 
 #include <Graphics/Vulkan/Utils/Device.hpp>
 
@@ -48,10 +51,6 @@
 #include <windows.h>
 #elif defined(__APPLE__)
 #include <dlfcn.h>
-#endif
-
-#ifdef _WIN32
-#define dlsym GetProcAddress
 #endif
 
 struct OffscreenContextEGLFunctionTable {
@@ -75,27 +74,6 @@ struct OffscreenContextEGLFunctionTable {
     PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT;
     PFNEGLQUERYDEVICEBINARYEXTPROC eglQueryDeviceBinaryEXT;
 };
-
-#define GL_VENDOR 0x1F00
-#define GL_RENDERER 0x1F01
-#define GL_VERSION 0x1F02
-#define GL_EXTENSIONS 0x1F03
-#define GL_SHADING_LANGUAGE_VERSION 0x8B8C
-#define GL_NUM_EXTENSIONS 0x821D
-#define GLAPIENTRY EGLAPIENTRY
-typedef unsigned int GLenum;
-typedef unsigned int GLuint;
-typedef int GLint;
-typedef unsigned char GLubyte;
-typedef int64_t GLint64;
-typedef const GLubyte* (GLAPIENTRY * PFNGLGETSTRINGPROC) (GLenum name);
-typedef const GLubyte* (GLAPIENTRY * PFNGLGETSTRINGIPROC) (GLenum name, GLuint index);
-typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (GLenum pname, GLint *params);
-
-#ifndef TOSTRING
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-#endif
 
 #ifdef _WIN32
 static HMODULE eglHandle = nullptr;

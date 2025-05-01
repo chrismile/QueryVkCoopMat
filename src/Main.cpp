@@ -35,8 +35,12 @@
 
 #ifdef __linux__
 #include <fstream>
-#include "OffscreenContextGL.hpp"
+#include "OffscreenContextEGL.hpp"
 #include "FormatInfo.hpp"
+#endif
+
+#ifdef _WIN32
+#include "OffscreenContextWGL.hpp"
 #endif
 
 #define RES_TO_STR(r) case r: return #r
@@ -425,6 +429,9 @@ int main(int argc, char *argv[]) {
 #ifdef __linux__
     bool shallTestDrmFormatModifiers = false;
 #endif
+#ifdef _WIN32
+    bool shallTestWglExperimental = false;
+#endif
     for (int i = 1; i < argc; i++) {
         std::string command = argv[i];
         if (command == "--help" || command == "-h") {
@@ -432,11 +439,19 @@ int main(int argc, char *argv[]) {
 #ifdef __linux__
             std::cout << "Optional argument: --test-drm-format (queries Linux DRM image format modifiers)" << std::endl;
 #endif
+#ifdef _WIN32
+            std::cout << "Optional argument: --wgl (queries WGL contexts for each device; experimental)" << std::endl;
+#endif
         }
 #ifdef __linux__
         else if (command == "--test-drm-format" || command == "--test-drm-formats" || command == "--drm-formats"
                 || "--drm") {
             shallTestDrmFormatModifiers = true;
+        }
+#endif
+#ifdef _WIN32
+        else if (command == "--wgl") {
+            shallTestWglExperimental = true;
         }
 #endif
         else {
@@ -454,6 +469,12 @@ int main(int argc, char *argv[]) {
 #ifdef __linux__
     sgl::Logfile::get()->write("<br>\n");
     bool isEglInitialized = loadEglLibrary();
+#endif
+#ifdef _WIN32
+    bool isWglInitialized = false;
+    if (shallTestWglExperimental) {
+        isWglInitialized = initWglPatch();
+    }
 #endif
 
     std::vector<const char*> optionalDeviceExtensions;
@@ -502,6 +523,11 @@ int main(int argc, char *argv[]) {
             checkEglFeatures(device);
         }
 #endif
+#ifdef _WIN32
+        if (isWglInitialized) {
+            checkWglFeatures(device);
+        }
+#endif
         checkCooperativeMatrixFeatures(device);
 #ifdef __linux__
         if (shallTestDrmFormatModifiers && device->getApiVersion() >= VK_API_VERSION_1_3
@@ -516,7 +542,14 @@ int main(int argc, char *argv[]) {
     }
 
 #ifdef __linux__
-    releaseEglLibrary();
+    if (isEglInitialized) {
+        releaseEglLibrary();
+    }
+#endif
+#ifdef _WIN32
+    if (isWglInitialized) {
+        freeWglPatch();
+    }
 #endif
     delete instance;
 

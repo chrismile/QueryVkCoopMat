@@ -26,8 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OFFSCREENCONTEXTGL_HPP
-#define OFFSCREENCONTEXTGL_HPP
+#ifndef OFFSCREENCONTEXTEGL_HPP
+#define OFFSCREENCONTEXTEGL_HPP
 
 namespace sgl { namespace vk {
 class Device;
@@ -40,4 +40,4 @@ bool loadEglLibrary();
 void releaseEglLibrary();
 void checkEglFeatures(sgl::vk::Device* device);
 
-#endif //OFFSCREENCONTEXTGL_HPP
+#endif //OFFSCREENCONTEXTEGL_HPP
