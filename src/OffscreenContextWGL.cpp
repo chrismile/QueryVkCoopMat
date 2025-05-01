@@ -293,7 +293,6 @@ void checkWglFeatures(sgl::vk::Device* device) {
                 adapterIdx++;
                 break;
             }
-            std::cout << "--- Device #" << adapterIdx << " display adapter ---" << std::endl;
             if (strcmp(device->getPhysicalDeviceProperties().deviceName, displayDevice.DeviceString) == 0) {
                 displayName = displayDevice.DeviceName;
                 break;

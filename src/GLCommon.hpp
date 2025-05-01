@@ -29,9 +29,6 @@
 #ifndef QUERYVKCOOPMAT_GLCOMMON_HPP
 #define QUERYVKCOOPMAT_GLCOMMON_HPP
 
-#include <cstdint>
-#include <GL/gl.h>
-
 #define GL_VENDOR 0x1F00
 #define GL_RENDERER 0x1F01
 #define GL_VERSION 0x1F02

@@ -63,6 +63,7 @@ target_compile_definitions(QueryVkCoopMat PRIVATE DLL_OBJECT=)
 target_compile_definitions(QueryVkCoopMat PRIVATE SUPPORT_VULKAN)
 target_compile_definitions(QueryVkCoopMat PRIVATE DISABLE_VULKAN_SWAPCHAIN_SUPPORT)
 if (WIN32)
+    target_include_directories(QueryVkCoopMat PRIVATE third_party)
     target_compile_definitions(QueryVkCoopMat PRIVATE DISABLE_SINGLETON_BOOST_INTERPROCESS)
 endif()
 
