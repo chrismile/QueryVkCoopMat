@@ -255,6 +255,13 @@ void checkEglFeatures(sgl::vk::Device* device) {
         }
     }
 
+    if (deviceExtensionsSet.find("EGL_EXT_device_persistent_id") != deviceExtensionsSet.end()) {
+        const char* deviceDriverName = eglf->eglQueryDeviceStringEXT(eglDevices[matchingDeviceIdx], EGL_DRIVER_NAME_EXT);
+        if (deviceDriverName) {
+            sgl::Logfile::get()->write(std::string() + "Device EGL driver: " + deviceDriverName, sgl::BLUE);
+        }
+    }
+
     if (deviceExtensionsSet.find("EGL_EXT_device_drm") != deviceExtensionsSet.end()) {
         const char* deviceDrmFile = eglf->eglQueryDeviceStringEXT(eglDevices[matchingDeviceIdx], EGL_DRM_DEVICE_FILE_EXT);
         if (deviceDrmFile) {
