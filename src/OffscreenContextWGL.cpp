@@ -152,7 +152,16 @@ void checkDefaultWglContext() {
     SetPixelFormat(deviceContext, pfi, &pfd);
 
     HGLRC glRenderingContext = wglf->wglCreateContext(deviceContext);
-    wglf->wglMakeCurrent(deviceContext, glRenderingContext);
+    if (!glRenderingContext) {
+        sgl::Logfile::get()->writeError(
+                "Error in checkDefaultWglContext: wglCreateContext failed.", false);
+        return;
+    }
+    if (!wglf->wglMakeCurrent(deviceContext, glRenderingContext)) {
+        sgl::Logfile::get()->writeError(
+                "Error in checkDefaultWglContext: wglMakeCurrent failed.", false);
+        return;
+    }
 
     sgl::Logfile::get()->write("<br><hr><br>\n");
     sgl::Logfile::get()->write("Default WGL OpenGL context information", sgl::BLUE);
@@ -311,6 +320,9 @@ void checkWglFeatures(sgl::vk::Device* device) {
     }
 
     HDC deviceContext = CreateDCA(displayName.c_str(), displayName.c_str(), nullptr, nullptr);
+    if (!deviceContext) {
+        return;
+    }
 
     PIXELFORMATDESCRIPTOR pfd{};
     pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -324,7 +336,16 @@ void checkWglFeatures(sgl::vk::Device* device) {
     SetPixelFormat(deviceContext, pfi, &pfd);
 
     HGLRC glRenderingContext = wglf->wglCreateContext(deviceContext);
-    wglf->wglMakeCurrent(deviceContext, glRenderingContext);
+    if (!glRenderingContext) {
+        sgl::Logfile::get()->writeError(
+                "Error in checkWglFeatures: wglCreateContext failed.", false);
+        return;
+    }
+    if (!wglf->wglMakeCurrent(deviceContext, glRenderingContext)) {
+        sgl::Logfile::get()->writeError(
+                "Error in checkWglFeatures: wglMakeCurrent failed.", false);
+        return;
+    }
     wglf->wglGetExtensionsStringARB = PFNWGLGETEXTENSIONSSTRINGARBPROC(
             getWglFunctionPointer(TOSTRING(wglGetExtensionsStringARB)));
 

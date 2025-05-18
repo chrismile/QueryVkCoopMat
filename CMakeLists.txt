@@ -94,11 +94,5 @@ if(MSYS OR MINGW OR (${CMAKE_GENERATOR} STREQUAL "MinGW Makefiles") OR (${CMAKE_
 endif()
 
 if (WIN32)
-    target_link_libraries(QueryVkCoopMat PRIVATE
-            d3d12.lib dxgi.lib dxguid.lib uuid.lib
-            kernel32.lib user32.lib
-            comdlg32.lib advapi32.lib shell32.lib
-            ole32.lib oleaut32.lib
-            runtimeobject.lib
-    )
+    target_link_libraries(QueryVkCoopMat PRIVATE dxgi.lib)
 endif()
