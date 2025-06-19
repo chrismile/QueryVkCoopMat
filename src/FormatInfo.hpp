@@ -634,39 +634,6 @@ std::string convertVkFormatFeatureFlagsToString(VkFormatFeatureFlags flags) {
     if ((flags & VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR) != 0) {
         featureFlagNames.emplace_back("FEATURE_VIDEO_ENCODE_DPB");
     }
-    if ((flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG) != 0) {
-        featureFlagNames.emplace_back("FEATURE_SAMPLED_IMAGE_FILTER_CUBIC");
-    }
-    if ((flags & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_TRANSFER_SRC");
-    }
-    if ((flags & VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_TRANSFER_DST");
-    }
-    if ((flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT_EXT) != 0) {
-        featureFlagNames.emplace_back("FEATURE_SAMPLED_IMAGE_FILTER_MINMAX");
-    }
-    if ((flags & VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_MIDPOINT_CHROMA_SAMPLES");
-    }
-    if ((flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_LINEAR_FILTER_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_LINEAR_FILTER");
-    }
-    if ((flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_SEPARATE_RECONSTRUCTION_FILTER_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_SEPARATE_RECONSTRUCTION_FILTER");
-    }
-    if ((flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT");
-    }
-    if ((flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE");
-    }
-    if ((flags & VK_FORMAT_FEATURE_DISJOINT_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_DISJOINT");
-    }
-    if ((flags & VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT_KHR) != 0) {
-        featureFlagNames.emplace_back("FEATURE_COSITED_CHROMA_SAMPLES");
-    }
     std::string featureFlagsString;
     for (size_t i = 0; i < featureFlagNames.size(); i++) {
         if (i != 0) {
@@ -690,7 +657,7 @@ std::string convertDrmVendorIdToString(uint64_t vendorId) {
     case DRM_FORMAT_MOD_VENDOR_SAMSUNG:
         return "SAMSUNG";
     case DRM_FORMAT_MOD_VENDOR_QCOM:
-        return "QCOM";
+        return "QUALCOM";
     case DRM_FORMAT_MOD_VENDOR_VIVANTE:
         return "VIVANTE";
     case DRM_FORMAT_MOD_VENDOR_BROADCOM:
