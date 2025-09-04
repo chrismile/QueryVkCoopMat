@@ -26,40 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef QUERYVKCOOPMAT_GLCOMMON_HPP
-#define QUERYVKCOOPMAT_GLCOMMON_HPP
+#ifndef QUERYVKCOOPMAT_OFFSCREENCONTEXTCOMMON_HPP
+#define QUERYVKCOOPMAT_OFFSCREENCONTEXTCOMMON_HPP
 
-#define GL_VENDOR 0x1F00
-#define GL_RENDERER 0x1F01
-#define GL_VERSION 0x1F02
-#define GL_EXTENSIONS 0x1F03
-#define GL_SHADING_LANGUAGE_VERSION 0x8B8C
-#define GL_NUM_EXTENSIONS 0x821D
-#define GL_MAX_SHADER_STORAGE_BLOCK_SIZE 0x90DE
-#define GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT 0x90DF
-#define GL_UUID_SIZE_EXT 16
-#define GL_NUM_DEVICE_UUIDS_EXT 0x9596
-#define GL_DEVICE_UUID_EXT 0x9597
-#define GL_DRIVER_UUID_EXT 0x9598
-typedef unsigned int GLenum;
-typedef unsigned int GLuint;
-typedef int GLint;
-typedef unsigned char GLubyte;
-typedef int64_t GLint64;
-typedef const GLubyte* (GLAPIENTRY * PFNGLGETSTRINGPROC) (GLenum name);
-typedef const GLubyte* (GLAPIENTRY * PFNGLGETSTRINGIPROC) (GLenum name, GLuint index);
-typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (GLenum pname, GLint *params);
-typedef void (GLAPIENTRY * PFNGLGETUNSIGNEDBYTEVEXTPROC) (GLenum pname, GLubyte* data);
-typedef void (GLAPIENTRY * PFNGLGETUNSIGNEDBYTEI_VEXTPROC) (GLenum target, GLuint index, GLubyte* data);
-typedef void (GLAPIENTRY * PFNGLGETINTEGER64VPROC) (GLenum pname, GLint64 *data);
+bool printOpenGLContextInformation(void* (*getGlFunctionPointer)(const char* functionName));
 
-#ifndef TOSTRING
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-#endif
-
-#ifdef _WIN32
-#define dlsym GetProcAddress
-#endif
-
-#endif //QUERYVKCOOPMAT_GLCOMMON_HPP
+#endif //QUERYVKCOOPMAT_OFFSCREENCONTEXTCOMMON_HPP

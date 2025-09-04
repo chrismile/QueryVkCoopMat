@@ -33,6 +33,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include "OffscreenContextCommon.hpp"
 #include "OffscreenContextEGL.hpp"
 
 #define GLAPIENTRY EGLAPIENTRY
@@ -389,35 +390,7 @@ void checkEglFeatures(sgl::vk::Device* device) {
                 "Error in OffscreenContextEGL::makeCurrent: eglMakeCurrent failed.", true);
     }
 
-    auto* glGetString = PFNGLGETSTRINGPROC(getEglFunctionPointer("glGetString"));
-    auto* glGetStringi = PFNGLGETSTRINGIPROC(getEglFunctionPointer("glGetStringi"));
-    auto* glGetIntegerv = PFNGLGETINTEGERVPROC(getEglFunctionPointer("glGetIntegerv"));
-    if (!glGetString || !glGetStringi || !glGetIntegerv) {
-        sgl::Logfile::get()->writeError(
-                "Error in OffscreenContextEGL::makeCurrent: eglGetProcAddress failed.", true);
-    } else {
-        int n = 0;
-        std::string extensionString;
-        glGetIntegerv(GL_NUM_EXTENSIONS, &n);
-        for (int i = 0; i < n; i++) {
-            std::string extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
-            extensionString += extension;
-            if (i + 1 < n) {
-                extensionString += ", ";
-            }
-        }
-        sgl::Logfile::get()->write("<br>\n");
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Version: " + (const char*)glGetString(GL_VERSION), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Vendor: " + (const char*)glGetString(GL_VENDOR), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Renderer: " + (const char*)glGetString(GL_RENDERER), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Shading Language Version: " + (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Extensions: " + extensionString, sgl::BLUE);
-    }
+    printOpenGLContextInformation(getEglFunctionPointer);
 
     if (eglSurface) {
         if (!eglf->eglDestroySurface(eglDisplay, eglSurface)) {

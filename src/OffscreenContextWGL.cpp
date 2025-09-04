@@ -51,6 +51,7 @@ inline void ThrowIfFailed(HRESULT hr) {
 #define GLAPIENTRY APIENTRY
 #include "GLCommon.hpp"
 
+#include "OffscreenContextCommon.hpp"
 #include "OffscreenContextWGL.hpp"
 
 #include <Graphics/Vulkan/Utils/Device.hpp>
@@ -165,23 +166,7 @@ void checkDefaultWglContext() {
 
     sgl::Logfile::get()->write("<br><hr><br>\n");
     sgl::Logfile::get()->write("Default WGL OpenGL context information", sgl::BLUE);
-    auto* glGetString = PFNGLGETSTRINGPROC(getWglFunctionPointer("glGetString"));
-    auto* glGetStringi = PFNGLGETSTRINGIPROC(getWglFunctionPointer("glGetStringi"));
-    auto* glGetIntegerv = PFNGLGETINTEGERVPROC(getWglFunctionPointer("glGetIntegerv"));
-    if (!glGetString || !glGetStringi || !glGetIntegerv) {
-        sgl::Logfile::get()->writeError(
-                "Error in checkDefaultWglContext: getWglFunctionPointer failed.", true);
-    } else {
-        sgl::Logfile::get()->write("<br>\n");
-        sgl::Logfile::get()->write(
-                std::string() + "OpenGL Version: " + (const char*)glGetString(GL_VERSION), sgl::BLUE);
-        sgl::Logfile::get()->write(
-                std::string() + "OpenGL Vendor: " + (const char*)glGetString(GL_VENDOR), sgl::BLUE);
-        sgl::Logfile::get()->write(
-                std::string() + "OpenGL Renderer: " + (const char*)glGetString(GL_RENDERER), sgl::BLUE);
-        sgl::Logfile::get()->write(
-                std::string() + "OpenGL Shading Language Version: " + (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION), sgl::BLUE);
-    }
+    printOpenGLContextInformation(getWglFunctionPointer);
 
     cleanupWgl(glRenderingContext);
     DestroyWindow(hWnd);
@@ -372,8 +357,6 @@ void checkWglFeatures(sgl::vk::Device* device) {
         // TODO
     }
 
-    auto* glGetString = PFNGLGETSTRINGPROC(getWglFunctionPointer("glGetString"));
-    auto* glGetStringi = PFNGLGETSTRINGIPROC(getWglFunctionPointer("glGetStringi"));
     auto* glGetIntegerv = PFNGLGETINTEGERVPROC(getWglFunctionPointer("glGetIntegerv"));
     auto* glGetUnsignedBytevEXT = PFNGLGETUNSIGNEDBYTEVEXTPROC(getWglFunctionPointer("glGetUnsignedBytevEXT"));
     auto* glGetUnsignedBytei_vEXT = PFNGLGETUNSIGNEDBYTEI_VEXTPROC(getWglFunctionPointer("glGetUnsignedBytei_vEXT"));
@@ -407,32 +390,7 @@ void checkWglFeatures(sgl::vk::Device* device) {
         sgl::Logfile::get()->write("Device WGL extensions: " + deviceExtensionsString, sgl::BLUE);
     }
 
-    if (!glGetString || !glGetStringi || !glGetIntegerv) {
-        sgl::Logfile::get()->writeError(
-                "Error in OffscreenContextWGL::makeCurrent: getWglFunctionPointer failed.", true);
-    } else {
-        int n = 0;
-        std::string extensionString;
-        glGetIntegerv(GL_NUM_EXTENSIONS, &n);
-        for (int i = 0; i < n; i++) {
-            std::string extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
-            extensionString += extension;
-            if (i + 1 < n) {
-                extensionString += ", ";
-            }
-        }
-        sgl::Logfile::get()->write("<br>\n");
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Version: " + (const char*)glGetString(GL_VERSION), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Vendor: " + (const char*)glGetString(GL_VENDOR), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Renderer: " + (const char*)glGetString(GL_RENDERER), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Shading Language Version: " + (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION), sgl::BLUE);
-        sgl::Logfile::get()->write(
-            std::string() + "OpenGL Extensions: " + extensionString, sgl::BLUE);
-    }
+    printOpenGLContextInformation(getWglFunctionPointer);
 
     //wglf->wglMakeCurrent(deviceContext, nullptr); // already done by wglDeleteContext
     cleanupWgl(glRenderingContext);
