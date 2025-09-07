@@ -72,6 +72,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         if: matrix.target_name == 'x86_64-windows-gnu'
         with:
+          msystem: UCRT64
           update: true
           install: >-
             base-devel
@@ -79,9 +80,9 @@ jobs:
             git
             curl
             wget
-            mingw64/mingw-w64-x86_64-cmake
-            mingw64/mingw-w64-x86_64-gcc
-            mingw64/mingw-w64-x86_64-ntldd
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-ntldd
 
       - name: Build target
         run: |
