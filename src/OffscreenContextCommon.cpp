@@ -65,7 +65,8 @@ bool printOpenGLContextInformation(void* (*getGlFunctionPointer)(const char* fun
     sgl::Logfile::get()->write(
             std::string() + "OpenGL Renderer: " + (const char*)glGetString(GL_RENDERER), sgl::BLUE);
     sgl::Logfile::get()->write(
-            std::string() + "OpenGL Shading Language Version: " + (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION), sgl::BLUE);
+            std::string() + "OpenGL Shading Language Version: "
+            + (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION), sgl::BLUE);
     sgl::Logfile::get()->write(
             std::string() + "OpenGL Extensions: " + extensionString, sgl::BLUE);
 
@@ -74,9 +75,11 @@ bool printOpenGLContextInformation(void* (*getGlFunctionPointer)(const char* fun
     glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxShaderStorageBlockSize);
     glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &ssboOffsetAlignment);
     sgl::Logfile::get()->write(
-            std::string() + "OpenGL SSBO Max Size: " + sgl::getNiceMemoryString(uint64_t(maxShaderStorageBlockSize), 2), sgl::BLUE);
+            std::string() + "OpenGL SSBO Max Size: "
+            + sgl::getNiceMemoryStringDifference(uint64_t(maxShaderStorageBlockSize), 2, true), sgl::BLUE);
     sgl::Logfile::get()->write(
-            std::string() + "OpenGL SSBO Offset Alignment: " + sgl::getNiceMemoryString(uint64_t(ssboOffsetAlignment), 2), sgl::BLUE);
+            std::string() + "OpenGL SSBO Offset Alignment: "
+            + sgl::getNiceMemoryString(uint64_t(ssboOffsetAlignment), 2), sgl::BLUE);
 
     return true;
 }

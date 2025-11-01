@@ -32,6 +32,9 @@
 #include <Utils/File/Logfile.hpp>
 #include <Graphics/Vulkan/Utils/Instance.hpp>
 #include <Graphics/Vulkan/Utils/Device.hpp>
+#include <ImGui/Widgets/NumberFormatting.hpp>
+
+#include "Math/Math.hpp"
 
 #ifdef __linux__
 #include <fstream>
@@ -329,6 +332,61 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
             && (device->getPhysicalDeviceVulkan13Properties().requiredSubgroupSizeStages & VK_SHADER_STAGE_COMPUTE_BIT) != 0) {
         writeOut("Min subgroup size: ", device->getPhysicalDeviceVulkan13Properties().minSubgroupSize);
         writeOut("Max subgroup size: ", device->getPhysicalDeviceVulkan13Properties().maxSubgroupSize);
+    }
+
+    writeOut("");
+    writeOut("Max memory allocations: ", device->getLimits().maxMemoryAllocationCount);
+    writeOut(
+            "Max storage buffer range: ",
+            sgl::getNiceMemoryStringDifference(device->getLimits().maxStorageBufferRange, 2, true));
+    if (device->getPhysicalDeviceProperties().apiVersion >= VK_API_VERSION_1_1) {
+        writeOut(
+                "Max memory allocation size: ",
+                sgl::getNiceMemoryStringDifference(device->getMaxMemoryAllocationSize(), 2, true));
+    }
+    writeOut("Supports shader 64-bit indexing: ", device->getShader64BitIndexingFeaturesEXT().shader64BitIndexing ? "Yes" : "No");
+
+    std::vector<std::string> flagsStringMap = {
+            "device local",  // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            "host visible",  // VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+            "host coherent", // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            "host cached"    // VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+    };
+    const VkPhysicalDeviceMemoryProperties& deviceMemoryProperties = device->getMemoryProperties();
+    for (uint32_t heapIdx = 0; heapIdx < deviceMemoryProperties.memoryHeapCount; heapIdx++) {
+        VkMemoryPropertyFlagBits typeFlags{};
+        for (uint32_t memoryTypeIdx = 0; memoryTypeIdx < deviceMemoryProperties.memoryTypeCount; memoryTypeIdx++) {
+            if (deviceMemoryProperties.memoryTypes[memoryTypeIdx].heapIndex == heapIdx) {
+                typeFlags = VkMemoryPropertyFlagBits(typeFlags | deviceMemoryProperties.memoryTypes[memoryTypeIdx].propertyFlags);
+            }
+        }
+        std::string memoryHeapInfo;
+        if (typeFlags != 0) {
+            memoryHeapInfo = " (";
+            typeFlags = VkMemoryPropertyFlagBits(typeFlags & 0xF);
+            auto numEntries = int(sgl::popcount(uint32_t(typeFlags)));
+            int entryIdx = 0;
+            for (int i = 0; i < 4; i++) {
+                auto flag = VkMemoryPropertyFlagBits(1 << i);
+                if ((typeFlags & flag) != 0) {
+                    memoryHeapInfo += flagsStringMap[i];
+                    if (entryIdx != numEntries - 1) {
+                        memoryHeapInfo += ", ";
+                    }
+                    entryIdx++;
+                }
+            }
+            memoryHeapInfo += ")";
+        }
+        bool hasTypeDeviceLocal = (typeFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) != 0;
+        bool isHeapDeviceLocal = (deviceMemoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0;
+        if (hasTypeDeviceLocal != isHeapDeviceLocal) {
+            sgl::Logfile::get()->writeError("Encountered memory heap with mismatching heap and type flags.");
+        }
+        writeOut(
+                "Memory heap #", heapIdx, ": ",
+                sgl::getNiceMemoryStringDifference(deviceMemoryProperties.memoryHeaps[heapIdx].size, 2, true),
+                memoryHeapInfo);
     }
 
     writeOut("");
