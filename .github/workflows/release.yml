@@ -99,6 +99,7 @@ jobs:
               CMAKE_ARGS+=(-G "MSYS Makefiles")
           fi
           if [ "$RUNNER_OS" == "Linux" ] && [ "${{ matrix.target_name }}" == "aarch64-linux" ]; then
+              sudo apt update
               sudo apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross
               CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="CMake/aarch64-linux-gnu.toolchain.cmake")
           fi
