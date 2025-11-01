@@ -563,6 +563,7 @@ int main(int argc, char *argv[]) {
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
+    optionalDeviceExtensions.push_back(VK_EXT_SHADER_64BIT_INDEXING_EXTENSION_NAME);
 #ifdef __linux__
     if (shallTestDrmFormatModifiers) {
         optionalDeviceExtensions.push_back(VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME);
