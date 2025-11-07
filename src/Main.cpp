@@ -44,6 +44,7 @@
 
 #ifdef _WIN32
 #include "OffscreenContextWGL.hpp"
+#include "WindowsUtils.hpp"
 #endif
 
 #define RES_TO_STR(r) case r: return #r
@@ -625,7 +626,7 @@ int main(int argc, char *argv[]) {
     delete instance;
 
 #ifdef _WIN32
-    system("pause");
+    pauseIfAppOwnsConsole();
 #endif
 
     return 0;
