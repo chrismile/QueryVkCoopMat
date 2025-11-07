@@ -322,6 +322,7 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
         writeOut("Device driver name: ", device->getDeviceDriverName());
         writeOut("Device driver info: ", device->getDeviceDriverInfo());
         writeOut("Device driver ID: ", device->getDeviceDriverId());
+        writeOut("Device driver version: ", device->getDriverVersionString());
         //writeOut("Device driver UUID: ", uint8ArrayToHex(device->getDeviceIDProperties().deviceUUID, VK_UUID_SIZE));
         //writeOut("Device driver LUID: ", uint8ArrayToHex(device->getDeviceIDProperties().deviceLUID, VK_UUID_SIZE));
     }
