@@ -347,6 +347,8 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
                 sgl::getNiceMemoryStringDifference(device->getMaxMemoryAllocationSize(), 2, true));
     }
     writeOut("Supports shader 64-bit indexing: ", device->getShader64BitIndexingFeaturesEXT().shader64BitIndexing ? "Yes" : "No");
+    writeOut("alignof(std::max_align_t): ", alignof(std::max_align_t));
+    writeOut("Min imported host pointer alignment: ", device->getMinImportedHostPointerAlignment());
 
     std::vector<std::string> flagsStringMap = {
             "device local",  // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
@@ -566,6 +568,8 @@ int main(int argc, char *argv[]) {
     optionalDeviceExtensions.push_back(VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_NV_COOPERATIVE_VECTOR_EXTENSION_NAME);
     optionalDeviceExtensions.push_back(VK_EXT_SHADER_64BIT_INDEXING_EXTENSION_NAME);
+    optionalDeviceExtensions.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
+    optionalDeviceExtensions.push_back(VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME);
 #ifdef __linux__
     if (shallTestDrmFormatModifiers) {
         optionalDeviceExtensions.push_back(VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME);
