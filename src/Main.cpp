@@ -350,6 +350,20 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
     writeOut("alignof(std::max_align_t): ", alignof(std::max_align_t));
     writeOut("Min imported host pointer alignment: ", device->getMinImportedHostPointerAlignment());
 
+    /*
+     * On Linux, dedicated NVIDIA GPUs seem to have (as of 2025-11-09) the following heaps:
+     * - Heap 0: Full VRAM
+     * - Heap 1: RAM
+     * - Heap 2, only if ReBAR not supported: 246MiB
+     *
+     * Also, they seem to have at least 4 memory types with property flags != 0:
+     * - MEMORY_PROPERTY_DEVICE_LOCAL_BIT: Heap 0
+     * - MEMORY_PROPERTY_HOST_VISIBLE_BIT, MEMORY_PROPERTY_HOST_COHERENT_BIT: Heap 1
+     * - MEMORY_PROPERTY_HOST_VISIBLE_BIT, MEMORY_PROPERTY_HOST_COHERENT_BIT, MEMORY_PROPERTY_HOST_CACHED_BIT: Heap 1
+     * - MEMORY_PROPERTY_DEVICE_LOCAL_BIT, MEMORY_PROPERTY_HOST_VISIBLE_BIT, MEMORY_PROPERTY_HOST_COHERENT_BIT:
+     *   - If ReBAR: Heap 0
+     *   - If no ReBAR: Heap 2
+     */
     std::vector<std::string> flagsStringMap = {
             "device local",  // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
             "host visible",  // VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
