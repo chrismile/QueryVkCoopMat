@@ -29,12 +29,11 @@
 #include <iostream>
 #include <utility>
 
+#include <Math/Math.hpp>
 #include <Utils/File/Logfile.hpp>
 #include <Graphics/Vulkan/Utils/Instance.hpp>
 #include <Graphics/Vulkan/Utils/Device.hpp>
 #include <ImGui/Widgets/NumberFormatting.hpp>
-
-#include "Math/Math.hpp"
 
 #ifdef __linux__
 #include <fstream>
@@ -324,6 +323,8 @@ void checkCooperativeMatrixFeatures(sgl::vk::Device* device) {
         writeOut("Device driver info: ", device->getDeviceDriverInfo());
         writeOut("Device driver ID: ", device->getDeviceDriverId());
         writeOut("Device driver version: ", device->getDriverVersionString());
+        writeOut("Device vendor ID: 0x", sgl::toHexString(device->getPhysicalDeviceProperties().vendorID));
+        writeOut("Device ID: 0x", sgl::toHexString(device->getPhysicalDeviceProperties().deviceID));
         //writeOut("Device driver UUID: ", uint8ArrayToHex(device->getDeviceIDProperties().deviceUUID, VK_UUID_SIZE));
         //writeOut("Device driver LUID: ", uint8ArrayToHex(device->getDeviceIDProperties().deviceLUID, VK_UUID_SIZE));
     }
